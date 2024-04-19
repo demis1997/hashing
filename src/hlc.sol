@@ -31,7 +31,7 @@ contract HLC {
 
 
 
-    SecurityAsset public immutable TOKEN;
+    Security public immutable TOKEN;
 
     uint public immutable TOKEN_AMOUNT;
 
