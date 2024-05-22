@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
-import "./Security.sol";
+import "./shares.sol";
 
 
-contract HLC {
+contract hash {
 
     //--------------- STATE ---------------//
 
@@ -23,7 +23,7 @@ contract HLC {
 
     bytes32 public immutable HASH_CANCELLATION_KEY; // <-- hash_cancellation_key to force cancellation
 
-   Status public hlcStatus;
+   Status public hashStatus;
 
 
 
@@ -31,7 +31,7 @@ contract HLC {
 
 
 
-    Security public immutable TOKEN;
+    Share public immutable TOKEN;
 
     uint public immutable TOKEN_AMOUNT;
 
@@ -77,8 +77,8 @@ contract HLC {
 
     modifier onlyInitialized() {
         require(
-            hlcStatus == Status.Inizialized,
-            "HLC is not initialized"
+            hashStatus == Status.Inizialized,
+            "hash is not initialized"
         );
         _;
     }
@@ -89,15 +89,15 @@ contract HLC {
 
    
 
-    /// @dev Initializes a new instance of the HLC (Hash Link Contract) contract.
+    /// @dev Initializes a new instance of the hash (Hash Link Contract) contract.
 
     /// @param _seller The address of the seller participating in the DvP.
 
     /// @param _buyer The address of the buyer participating in the DvP.
 
-    /// @param _price The agreed price of the security token in euro.
+    /// @param _price The agreed price of the Share token in euro.
 
-    /// @param _tokenAmount The amount of security tokens to be exchanged.
+    /// @param _tokenAmount The amount of Share tokens to be exchanged.
 
     /// @param _tipsId An identifier used by tips associated with the DvP.
 
@@ -105,7 +105,7 @@ contract HLC {
 
     /// @param _hashCancellationKey The hashed cancellation key required for forced cancellation.
 
-    /// @param _tokenAddress The address of the security token that represents the security token.
+    /// @param _tokenAddress The address of the Share token that represents the Share token.
 
 
 
@@ -131,48 +131,47 @@ contract HLC {
         bytes32 _hashCancellationKey,
         address _tokenAddress
     ) {
-        // check address
 
         require(
             msg.sender != _seller,
-            "HLC: master address is the same as seller address"
+            "hash: master address is the same as seller address"
         );
 
         require(
             _seller != _buyer,
-            "HLC: seller address is the same as buyer address"
+            "hash: seller address is the same as buyer address"
         );
 
         // implicitly check _buyer != msg.sender
 
-        require(_tokenAddress != address(0), "HLC: token address is zero");
+        require(_tokenAddress != address(0), "hash: token address is zero");
 
-        // check hlc info
+        // check hash info
 
-        require(bytes(_price).length > 0, "HLC: price is zero");
+        require(bytes(_price).length > 0, "hash: price is zero");
 
         require(
             _hashExecutionKey.length > 0,
-            "HLC: hash execution Key is empty"
+            "hash: hash execution Key is empty"
         );
 
         require(
             _hashCancellationKey.length > 0,
-            "HLC: hash cancellation Key is empty"
+            "hash: hash cancellation Key is empty"
         );
 
         require(
             _tokenAmount > 0,
-            "HLC: invalid token amount, must be greater than zero"
+            "hash: invalid token amount, must be greater than zero"
         );
 
         // check funds
 
-        TOKEN = SecurityAsset(_tokenAddress);
+        TOKEN = Share(_tokenAddress);
 
         require(
             TOKEN.balanceOf(_seller) >= _tokenAmount,
-            "HLC: seller has not enough token"
+            "hash: seller has not enough token"
         );
 
         // assignments
@@ -193,7 +192,7 @@ contract HLC {
 
         HASH_CANCELLATION_KEY = _hashCancellationKey;
 
-        hlcStatus = Status.Inizialized;
+        hashStatus = Status.Inizialized;
 
         // issue event
 
@@ -212,13 +211,13 @@ contract HLC {
     function cooperativeExecution() external onlySeller onlyInitialized {
         // update status
 
-        hlcStatus = Status.Executed;
+        hashStatus = Status.Executed;
 
         // execute transfer to the buyer
 
         bool success = TOKEN.transfer(BUYER, TOKEN_AMOUNT);
 
-        require(success, "HLC: failed token transfer");
+        require(success, "hash: failed token transfer");
 
         // issue event
 
@@ -233,15 +232,15 @@ contract HLC {
 
     /// - Only the buyer can call this function.
 
-    /// - The HLC must be in the 'Initialized' status.
+    /// - The hash must be in the 'Initialized' status.
 
     ///
 
     /// Effects:
 
-    /// - Transfers N security token from the buyer to the seller.
+    /// - Transfers N Share token from the buyer to the seller.
 
-    /// - Updates the HLC status to 'Cancelled'.
+    /// - Updates the hash status to 'Cancelled'.
 
     ///
 
@@ -252,13 +251,13 @@ contract HLC {
     function cooperativeCancellation() external onlyBuyer onlyInitialized {
         // update status
 
-        hlcStatus = Status.Cancelled;
+        hashStatus = Status.Cancelled;
 
         // execute transfer to the seller
 
         bool success = TOKEN.transfer(SELLER, TOKEN_AMOUNT);
 
-        require(success, "HLC: failed token transfer");
+        require(success, "hash: failed token transfer");
 
         // issue event
 
@@ -267,7 +266,7 @@ contract HLC {
 
     /// @dev Allows to force the execution of the DvP by the buyer.
 
-    /// This function can only be called by the buyer when the HLC is in the 'Initialized' status.
+    /// This function can only be called by the buyer when the hash is in the 'Initialized' status.
 
     /// The execution is forced by providing the `_executionKey` as a parameter, which will be validated against the stored hash.
 
@@ -279,9 +278,9 @@ contract HLC {
 
     /// Requirements:
 
-    /// - The caller must be the buyer of the HLC.
+    /// - The caller must be the buyer of the hash.
 
-    /// - The HLC must be in the 'Initialized' status.
+    /// - The hash must be in the 'Initialized' status.
 
     /// - The provided `_executionKey` must match the stored hashExecutionKey.
 
@@ -289,9 +288,9 @@ contract HLC {
 
     /// Effects:
 
-    /// - Transfers TOKEN_AMOUNT security token from the buyer to the seller.
+    /// - Transfers TOKEN_AMOUNT Share token from the buyer to the seller.
 
-    /// - Updates the status of the HLC to 'Executed'.
+    /// - Updates the status of the hash to 'Executed'.
 
     ///
 
@@ -306,18 +305,18 @@ contract HLC {
 
         require(
             HASH_EXECUTION_KEY == sha256(abi.encodePacked(_executionKey)),
-            "HLC: Hash Execution Key is not valid"
+            "hash: Hash Execution Key is not valid"
         );
 
         // update status
 
-        hlcStatus = Status.Executed;
+        hashStatus = Status.Executed;
 
         // execute transfer to the seller
 
         bool success = TOKEN.transfer(BUYER, TOKEN_AMOUNT);
 
-        require(success, "HLC: failed token transfer");
+        require(success, "hash: failed token transfer");
 
         // issue event
 
@@ -326,7 +325,7 @@ contract HLC {
 
     /// @dev Allows to force the cancellation of the DvP by the seller.
 
-    /// This function can only be called by the seller when the HLC is in the 'Initialized' status.
+    /// This function can only be called by the seller when the hash is in the 'Initialized' status.
 
     /// The cancellation is forced by providing the `_cancellationKey` as a parameter, which will be validated against the stored hash.
 
@@ -338,9 +337,9 @@ contract HLC {
 
     /// Requirements:
 
-    /// - The caller must be the seller of the HLC.
+    /// - The caller must be the seller of the hash.
 
-    /// - The HLC must be in the 'Initialized' status.
+    /// - The hash must be in the 'Initialized' status.
 
     /// - The provided `_cancellationKey` must match the stored hashCancellationKey.
 
@@ -348,9 +347,9 @@ contract HLC {
 
     /// Effects:
 
-    /// - Transfers TOKEN_AMOUNT security token from the seller to the buyer.
+    /// - Transfers TOKEN_AMOUNT Share token from the seller to the buyer.
 
-    /// - Updates the status of the HLC to 'Cancelled'.
+    /// - Updates the status of the hash to 'Cancelled'.
 
     ///
 
@@ -365,18 +364,18 @@ contract HLC {
 
         require(
             HASH_CANCELLATION_KEY == sha256(abi.encodePacked(_cancellationKey)),
-            "HLC: hash cancellation Key is not valid"
+            "hash: hash cancellation Key is not valid"
         );
 
         // update status
 
-        hlcStatus = Status.Cancelled;
+        hashStatus = Status.Cancelled;
 
         // execute transfer to the buyer
 
         bool success = TOKEN.transfer(SELLER, TOKEN_AMOUNT);
 
-        require(success, "HLC: failed token transfer");
+        require(success, "hash: failed token transfer");
 
         // issue event
 

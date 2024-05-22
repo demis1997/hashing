@@ -1,13 +1,10 @@
-// contracts/Security.sol
+// contracts/Share.sol
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract Security is ERC20, AccessControl {
-    bytes32 public constant ISSUER_ROLE = keccak256("ISSUER_ROLE");
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+contract Share is ERC20 {
 
     // State variables for name and symbol
     string private _name;
@@ -17,12 +14,10 @@ contract Security is ERC20, AccessControl {
         _name = "someShare";
         _symbol = "SS";
         _mint(msg.sender, initialSupply);
-
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);  // Grants admin role to contract deployer
-        _setupRole(ADMIN_ROLE, msg.sender);          // Deployer can manage roles
-        _setupRole(ISSUER_ROLE, msg.sender);         // Deployer can also mint tokens
+  
     }
 
+function mint()public{}
     // Override the name function to use the custom _name variable
     function name() public view virtual override returns (string memory) {
         return _name;
@@ -34,17 +29,17 @@ contract Security is ERC20, AccessControl {
     }
 
     // Set the token name, only callable by an admin
-    function setName(string memory newName) public onlyRole(ADMIN_ROLE) {
+    function setName(string memory newName) public{
         _name = newName;
     }
 
     // Set the token symbol, only callable by an admin
-    function setSymbol(string memory newSymbol) public onlyRole(ADMIN_ROLE) {
+    function setSymbol(string memory newSymbol) public  {
         _symbol = newSymbol;
     }
 
     // Allows addresses with ISSUER_ROLE to mint tokens
-    function mint(address to, uint256 amount) public onlyRole(ISSUER_ROLE) {
+    function mint(address to, uint256 amount) public  {
         _mint(to, amount);
     }
 
@@ -54,4 +49,7 @@ contract Security is ERC20, AccessControl {
         _transfer(_msgSender(), recipient, amount);
         return true;
     }
+
+
+    
 }
